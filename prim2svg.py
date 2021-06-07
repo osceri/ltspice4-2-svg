@@ -3,8 +3,9 @@
 import svgwrite
 
 def main():
-    # Create output file.
-    dwg = svgwrite.Drawing("test.svg", size=(5000,5000))
+    # Create output file. Make sure that the size in this file is
+    # equal to the parameters in the other file. WILL fix
+    dwg = svgwrite.Drawing("test.svg", size=(1040,1040))
     
     # The style of the schematic is derived from the css file
     dwg.add_stylesheet('style.css', title="Circuit style")
