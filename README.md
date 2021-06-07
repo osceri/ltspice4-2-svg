@@ -18,4 +18,9 @@ which takes the file "netlist.txt" and produces the file "test.svg".
 My code doesn't try to resolve system paths, compatibility or anything. If it works it works :d
 
 TODO:
-Add support for aconfig file as to make the output of the programs more predictable/controlled
+Add support for a config file as to make the output of the programs more predictable/controlled
+
+Before:
+![alt text](/first.png)
+After (pardon the hideous font):
+![alt text](/second.png)
