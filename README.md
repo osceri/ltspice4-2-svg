@@ -22,8 +22,8 @@ Add support for a config file as to make the output of the programs more predict
 
 Before:
 
-![alt text](/first.png)
+![alt text](/first.PNG)
 
 After (pardon the hideous font):
 
-![alt text](/second.png)
+![alt text](/second.PNG)
