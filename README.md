@@ -26,4 +26,4 @@ Before:
 
 After (pardon the hideous font):
 
-![alt text](/test.SVG)
+![alt text](/test.svg)
