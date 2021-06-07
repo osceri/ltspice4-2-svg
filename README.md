@@ -21,6 +21,9 @@ TODO:
 Add support for a config file as to make the output of the programs more predictable/controlled
 
 Before:
+
 ![alt text](/first.png)
+
 After (pardon the hideous font):
+
 ![alt text](/second.png)
