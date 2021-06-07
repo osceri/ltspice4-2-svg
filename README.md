@@ -6,12 +6,14 @@ The code runs with python 3.7.
 
 First the file spice2prim.py is run with:
 
-    
-  python3.7 spice2prim.py
+    python3.7 spice2prim.py
 
-  python3.7 prim2svg.py
+which takes a .asc file in the current working directory and produces the file "netlist.txt".
+Secondly the file prim2svg.py is run with:
 
-which take the file "netlist.txt" and produces the file "test.svg".
+      python3.7 prim2svg.py
+
+which takes the file "netlist.txt" and produces the file "test.svg".
 
 My code doesn't try to resolve system paths, compatibility or anything. If it works it works :d
 
