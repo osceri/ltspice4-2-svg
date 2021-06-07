@@ -1,2 +1,29 @@
 # ltspice4-2-svg
- Python code which make ltspice circuits into stylized SVG
+Python code which make ltspice circuits into stylized SVG.
+
+The only dependency is svgwrite (and my code uses os and sys).
+The code runs with python 3.7, and ltspice with files that contain the text "Version 4" as the first line.
+
+First the file spice2prim.py is run with:
+
+    python3.7 spice2prim.py
+
+which takes a .asc file in the current working directory and produces the file "netlist.txt".
+Secondly the file prim2svg.py is run with:
+
+    python3.7 prim2svg.py
+
+which takes the file "netlist.txt" and produces the file "test.svg".
+
+My code doesn't try to resolve system paths, compatibility or anything. If it works it works :d
+
+TODO:
+Add support for a config file as to make the output of the programs more predictable/controlled
+
+Before:
+
+![alt text](/first.png)
+
+After (pardon the hideous font):
+
+![alt text](/second.png)
