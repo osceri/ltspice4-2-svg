@@ -6,12 +6,12 @@ The code runs with python 3.7.
 
 First the file spice2prim.py is run with:
 
-python3.7 spice2prim.py
+  python3.7 spice2prim.py
 
 which seeks out an .asc file in the directory and produces the file "netlist.txt"
 Then the file prim2svg.py is run with:
 
-python3.7 prim2svg.py
+  python3.7 prim2svg.py
 
 which take the file "netlist.txt" and produces the file "test.svg".
 
