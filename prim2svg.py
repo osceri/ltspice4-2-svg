@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: ascii -*-
 import svgwrite
+from config import *
 
 def main():
     # Create output file. Make sure that the size in this file is
     # equal to the parameters in the other file. WILL fix
-    dwg = svgwrite.Drawing("test.svg", size=(1040,1040))
+    dwg = svgwrite.Drawing("test.svg", size=(svg_file_width, svg_file_height))
     
     # The style of the schematic is derived from the css file
     dwg.add_stylesheet('style.css', title="Circuit style")
@@ -96,9 +97,11 @@ def main():
     dwg.add(lines)
     dwg.add(rects)
     dwg.add(arcs)
-    dwg.add(texts)
+    if display_text:
+        dwg.add(texts)
     dwg.add(circles)
-    dwg.add(nodes)
+    if display_nodes:
+        dwg.add(nodes)
     
     # The SVG file is saved!
     dwg.save()

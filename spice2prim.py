@@ -3,12 +3,7 @@
 import os
 import sys
 from math import *
-
-# I'm sure there are platform-agnostic solutions to finding
-# this directory, eitherway
-
-# change this to be the the appropriate lib
-filepath = "C:/Users/oscar/Documents/LTspiceXVII/lib/"
+from config import *
 
 # Output buffers.
 text_output = ""
@@ -180,10 +175,10 @@ def main():
     # to avoid clipping
     def adjust_bounds():
         global lower_x, lower_y, upper_x, upper_y
-        lower_x -= 20
-        lower_y -= 20
-        upper_x += 20
-        upper_y += 20
+        lower_x -= svg_content_border
+        lower_y -= svg_content_border
+        upper_x += svg_content_border
+        upper_y += svg_content_border
 
     # Every wire (tuple of floats) will be placed here
     pwires = []
@@ -229,7 +224,8 @@ def main():
                     lines += [f"SYMBOL ground {x} {y} {R}"]
                 else:
                     _, T = hnode_dir([x, y], pwires)
-                    fprint(f"text {x} {y} {T} {2} ;{flag}") # Under construction :)
+                    if display_flags:
+                        fprint(f"text {x} {y} {T} {2} ;{flag}")
 
             # Add all the text
             if "TEXT " == line[:5]:
@@ -250,7 +246,7 @@ def main():
 
                 symbol = '/'.join(symbol.split('\\\\'))
 
-                asy_file = f"{filepath}sym/{symbol}.asy"
+                asy_file = f"{lib_filepath}sym/{symbol}.asy"
 
                 # Further attributes may have to be added
                 value_x, value_y, value_align, value_size, value_value = 0, 0, "", 0, ""
@@ -303,11 +299,11 @@ def main():
                         if "SYMATTR " == sline[:8]:
                             array = sline.split()
                             _, attribute, value = array[:3]
-                            if attribute == "Value":
+                            if attribute == "Value" and display_component_values:
                                 if value_size != 0:
                                     update_bounds(value_x, value_y)
                                     fprint(f"text {value_x} {value_y} {value_align} {value_size} ;{value_value}")
-                            if attribute == "Prefix":
+                            if attribute == "Prefix" and display_component_InstName:
                                 if prefix_size != 0:
                                     update_bounds(prefix_x, prefix_y)
                                     fprint(f"text {prefix_x} {prefix_y} {prefix_align} {prefix_size} ;{prefix_value}")
@@ -392,11 +388,11 @@ def main():
     adjust_bounds() # To avoid clipping
 
     # Always normalizes the same in every direction,
-    # Makes every detail fit
+    # makes every detail fit (often)
     if (upper_y - lower_y) < (upper_x - lower_x):
-        d = 1000/(upper_x - lower_x)
+        d = (svg_file_width - 2*svg_content_border)/(upper_x - lower_x)
     else:
-        d = 1000/(upper_y - lower_y)
+        d = (svg_file_heigth - 2*svg_content_border)/(upper_y - lower_y)
 
     # Reserve seperate scaling factors for the x  and y dimensions
     dx = d
@@ -452,7 +448,7 @@ def main():
             _, x, y, align, size = array.split()
             x, y, size = map(float, [x, y, size])
             x, y = affine([x, y])
-            size = size*dy
+            size = size*dy*font_scale
             fprint(f"text {x} {y} {align} {size} ;{text}")
 
     # Write to file
