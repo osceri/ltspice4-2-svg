@@ -19,6 +19,7 @@ def main():
     circles = dwg.g(class_="line")
     arcs = dwg.g(class_="line")
     texts = dwg.g(class_="text")
+    comments = dwg.g(class_="comment")
     
     # The netlist file in the local directory is opened, and the primitives are added
     # to their corresponding groups
@@ -52,8 +53,12 @@ def main():
                 arcs.add(path)
             # Text needs extra attention because anchoring, rotation and position is tricky
             if "text " == line[:5]:
-                array, semi, text = line.partition(";")
-                _, x, y, align, size = array.split()
+                words = line.split()
+                _, x, y, align, size = words[:5]
+                text = " ".join(words[5:])
+                is_comment = ("!" == text[0])
+                text = text[1:]
+
                 x, y = map(float, [x, y])
                 size = round(10*float(size))
 
@@ -62,6 +67,10 @@ def main():
                 vertical = False
     
                 # The align-flag may have any number of direction/orientation-tokens preceding the
+                # Bottom and Top don't exist. They're just offset Center
+                align = align.replace('Bottom', 'uuCenter')
+                align = align.replace('Top', 'ddCenter')
+
                 # actual alignment.
                 while True:
                     token = align[0]
@@ -90,7 +99,10 @@ def main():
                 x += x_offset
                 y += y_offset
     
-                texts.add(dwg.text(text, insert=(x, y), style=f"text-anchor:{align};font-size:{size}px", transform=f"rotate({-90 if vertical else 0},{x},{y})"))
+                if is_comment:
+                    comments.add(dwg.text(text, insert=(x, y), style=f"text-anchor:{align};font-size:{size}px", transform=f"rotate({-90 if vertical else 0},{x},{y})"))
+                else:
+                    texts.add(dwg.text(text, insert=(x, y), style=f"text-anchor:{align};font-size:{size}px", transform=f"rotate({-90 if vertical else 0},{x},{y})"))
     
     
     # The primitive groups are added to the SVG
@@ -99,6 +111,8 @@ def main():
     dwg.add(arcs)
     if display_text:
         dwg.add(texts)
+        if display_comments:
+            dwg.add(comments)
     dwg.add(circles)
     if display_nodes:
         dwg.add(nodes)

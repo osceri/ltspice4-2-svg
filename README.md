@@ -20,10 +20,7 @@ My code doesn't try to resolve system paths, compatibility or anything. If it wo
 Github doesn't seem to be able to display the SVG. Perhaps the format is incorrect (something that the writesvg module might have function calls to remedy), but firefox is able to display this SVG. 
 
 TODO:
-
-Add support for a config file as to make the output of the programs more predictable/controlled
-
-Try out svg-to-pdf and svg-to-tikz tools for extended functionality.
+fix symbol values, symbol rotation (sometimes messes up)
 
 Before:
 

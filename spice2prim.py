@@ -183,6 +183,11 @@ def main():
     # Every wire (tuple of floats) will be placed here
     pwires = []
 
+    # Further attributes may have to be added
+    value_x, value_y, value_align, value_size = 0, 0, "", 0
+    prefix_x, prefix_y, prefix_align, prefix_size = 0, 0, "", 0
+    symbol_x, symbol_y = 0, 0
+
     with open(asc_file, "r", encoding='ISO-8859-1') as fstream:
         lines = []
         # Cleanup all text lines
@@ -229,18 +234,64 @@ def main():
 
             # Add all the text
             if "TEXT " == line[:5]:
-                array, semi, text = line.partition(";")
-                _, x, y, align, size = array.split()
+                words = line.split()
+                _, x, y, align, size = words[:5]
+                text = " ".join(words[5:])
+                x, y, sizef = map(float, [x, y, size])
+
+                bottom_alignment = ("Bottom" in align) # Special case
+                if '\\n' in text:
+                    prefix = text[0]
+                    text = text[1:]
+                    text_lines = text.split('\\n')
+                    K = len(text_lines)
+                    for k, text_line in enumerate(text_lines):
+                        if bottom_alignment:
+                            k = k - K + 1
+                        lines.append(f"TEXT {x} {y+k*15*sizef} {align} {size} {prefix+text_line}")
+                else:
+                    update_bounds(x, y)
+                    fprint(f"text {x} {y} {align} {size} {text}")
+
+
+            if "WINDOW " == line[:7]:
+                _, index, x, y, align, size = line.split()
                 x, y = map(float, [x, y])
 
-                update_bounds(x, y)
-                fprint(f"text {x} {y} {align} {size} ;{text}")
+                if index == "0":
+                    value_x = x + symbol_x
+                    value_y = y + symbol_y
+                    value_align = align
+                    value_size = size
+                if index == "3":
+                    prefix_x = x + symbol_x
+                    prefix_y = y + symbol_y
+                    prefix_align = align
+                    prefix_size = size
+
+            if "SYMATTR " == line[:8]:
+                words = line.split()
+                attribute = words[1]
+                value = " ".join(words[2:])
+
+                if attribute == "Value" and display_component_values:
+                    if value_size != 0:
+                        update_bounds(value_x, value_y)
+                        fprint(f"text {value_x} {value_y} {value_align} {value_size} ;{value}")
+                        value_x, value_y, value_align, value_size = 0, 0, "", 0
+
+                if attribute == "InstName" and display_component_InstName:
+                    if prefix_size != 0:
+                        update_bounds(prefix_x, prefix_y)
+                        fprint(f"text {prefix_x} {prefix_y} {prefix_align} {prefix_size} ;{value}")
+                        prefix_x, prefix_y, prefix_align, prefix_size = 0, 0, "", 0
 
             # For every symbol, offset, rotate and align the lines and text within
             # Add these to the output
             if "SYMBOL " == line[:7]:
                 _, symbol, x, y, rot = line.split()
                 x_offset, y_offset = map(float, [x, y])
+                symbol_x, symbol_y = x_offset, y_offset
                 mirror = (rot[0] == "M")
                 phi = pi/180*float(rot[1:])
 
@@ -248,81 +299,16 @@ def main():
 
                 asy_file = f"{lib_filepath}sym/{symbol}.asy"
 
-                # Further attributes may have to be added
-                value_x, value_y, value_align, value_size, value_value = 0, 0, "", 0, ""
-                prefix_x, prefix_y, prefix_align, prefix_size, prefix_value = 0, 0, "", 0, ""
-
-                # Bad code
-                line_index = lines.index(line)+1
-                line_max = len(lines)
-                while line_index < line_max:
-                    ssline = lines[line_index]
-                    if "SYMATTR " == ssline[:8]:
-                        _, attribute, value = ssline.split()
-                        if attribute == "InstName":
-                            prefix_value = value
-                        if attribute == "Value":
-                            value_value = value
-                        line_index += 1
-                    else:
-                        break
-
                 # Every type of primitive handled with dense but obvious code.
                 # WINDOW/SYMATTR are dealt with over several cycles, which is
                 # confusing and not obvious :D
                 with open(asy_file, "r", encoding='ISO-8859-1') as f2stream:
                     for sline in f2stream:
-                        if "WINDOW " == sline[:7]:
-                            _, index, x, y, align, size = sline.split()
-                            x, y = map(float, [x, y])
-
-                            if mirror:
-                                align = {"Left":"Right", "Right":"Left"}[align]
-                            if rot[1:] == "90" or rot[1:] == "270":
-                                align = "dddd" + align
-                            if rot[1:] == "180":
-                                mirror = not mirror
-
-                            x, y = add_vec(rot_vec(phi, mirror_vec(mirror, [x, y])), [x_offset, y_offset])
-
-                            if index == "0":
-                                value_x = x
-                                value_y = y
-                                value_align = align
-                                value_size = size
-                            if index == "3":
-                                prefix_x = x
-                                prefix_y = y
-                                prefix_align = align
-                                prefix_size = size
-
-                        if "SYMATTR " == sline[:8]:
-                            array = sline.split()
-                            _, attribute, value = array[:3]
-                            if attribute == "Value" and display_component_values:
-                                if value_size != 0:
-                                    update_bounds(value_x, value_y)
-                                    fprint(f"text {value_x} {value_y} {value_align} {value_size} ;{value_value}")
-                            if attribute == "Prefix" and display_component_InstName:
-                                if prefix_size != 0:
-                                    update_bounds(prefix_x, prefix_y)
-                                    fprint(f"text {prefix_x} {prefix_y} {prefix_align} {prefix_size} ;{prefix_value}")
-                
-                        if "TEXT " == sline[:5]:
-                            array, semi, text = sline.partition(";")
-                            _, x, y, align, size = array.split()
-                            x, y = map(float, [x, y])
-                            x, y = add_vec(rot_vec(phi, mirror_vec(mirror, [x, y])), [x_offset, y_offset])
-
-                            update_bounds(x, y)
-                            fprint(f"text {x} {y} {align} {size} ;{text}")
-
                         if "LINE " == sline[:5]:
                             _, linetype, x0, y0, x1, y1 = sline.split()
                             x0, y0, x1, y1 = map(float, [x0, y0, x1, y1])
                             x0, y0 = add_vec(rot_vec(phi, mirror_vec(mirror, [x0, y0])), [x_offset, y_offset])
                             x1, y1 = add_vec(rot_vec(phi, mirror_vec(mirror, [x1, y1])), [x_offset, y_offset])
-
                             update_bounds(x0, y0)
                             update_bounds(x1, y1)
                             fprint(f"line {x0} {y0} {x1} {y1}")
@@ -332,7 +318,6 @@ def main():
                             x0, y0, x1, y1 = map(float, [x0, y0, x1, y1])
                             x0, y0 = add_vec(rot_vec(phi, mirror_vec(mirror, [x0, y0])), [x_offset, y_offset])
                             x1, y1 = add_vec(rot_vec(phi, mirror_vec(mirror, [x1, y1])), [x_offset, y_offset])
-
                             update_bounds(x0, y0)
                             update_bounds(x1, y1)
                             fprint(f"rect {x0} {y0} {x1} {y1}")
@@ -392,7 +377,7 @@ def main():
     if (upper_y - lower_y) < (upper_x - lower_x):
         d = (svg_file_width - 2*svg_content_border)/(upper_x - lower_x)
     else:
-        d = (svg_file_heigth - 2*svg_content_border)/(upper_y - lower_y)
+        d = (svg_file_height - 2*svg_content_border)/(upper_y - lower_y)
 
     # Reserve seperate scaling factors for the x  and y dimensions
     dx = d
@@ -444,12 +429,13 @@ def main():
             fprint(f"arc {x0} {y0} {x1} {y1} {rx} {ry} {angle} {large_arc} {angle_dir}")
     for line in lines:
         if "text " == line[:5]:
-            array, semi, text = line.partition(";")
-            _, x, y, align, size = array.split()
+            words = line.split()
+            _, x, y, align, size = words[:5]
+            text = " ".join(words[5:])
             x, y, size = map(float, [x, y, size])
             x, y = affine([x, y])
             size = size*dy*font_scale
-            fprint(f"text {x} {y} {align} {size} ;{text}")
+            fprint(f"text {x} {y} {align} {size} {text}")
 
     # Write to file
     with open("netlist.txt", "w", encoding='ISO-8859-1') as ostream:

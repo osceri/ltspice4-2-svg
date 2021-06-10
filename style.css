@@ -8,6 +8,16 @@ stroke-width:1;
 fill:red;
 }
 
+.comment {
+font-size:12px;
+font-family:Comic Sans MS, Arial;
+font-weight:bold;
+font-style:oblique;
+stroke:black;
+stroke-width:1;
+fill:blue;
+}
+
 .line {
 stroke-width: 1px;
 stroke:rgb(0,0,0);

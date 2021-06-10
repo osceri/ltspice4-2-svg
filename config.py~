@@ -5,7 +5,7 @@
 lib_filepath = "C:/Users/oscar/Documents/LTspiceXVII/lib/"
 
 # Can be used to disable all text
-display_text = True
+display_text = False
 
 # Can be used to disable all text
 display_comments = True
