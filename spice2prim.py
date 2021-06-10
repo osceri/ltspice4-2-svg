@@ -183,10 +183,6 @@ def main():
     # Every wire (tuple of floats) will be placed here
     pwires = []
 
-    # Further attributes may have to be added
-    value_x, value_y, value_align, value_size = 0, 0, "", 0
-    prefix_x, prefix_y, prefix_align, prefix_size = 0, 0, "", 0
-    symbol_x, symbol_y = 0, 0
 
     with open(asc_file, "r", encoding='ISO-8859-1') as fstream:
         lines = []
@@ -253,22 +249,6 @@ def main():
                     update_bounds(x, y)
                     fprint(f"text {x} {y} {align} {size} {text}")
 
-
-            if "WINDOW " == line[:7]:
-                _, index, x, y, align, size = line.split()
-                x, y = map(float, [x, y])
-
-                if index == "0":
-                    value_x = x + symbol_x
-                    value_y = y + symbol_y
-                    value_align = align
-                    value_size = size
-                if index == "3":
-                    prefix_x = x + symbol_x
-                    prefix_y = y + symbol_y
-                    prefix_align = align
-                    prefix_size = size
-
             if "SYMATTR " == line[:8]:
                 words = line.split()
                 attribute = words[1]
@@ -286,6 +266,7 @@ def main():
                         fprint(f"text {prefix_x} {prefix_y} {prefix_align} {prefix_size} ;{value}")
                         prefix_x, prefix_y, prefix_align, prefix_size = 0, 0, "", 0
 
+
             # For every symbol, offset, rotate and align the lines and text within
             # Add these to the output
             if "SYMBOL " == line[:7]:
@@ -299,16 +280,46 @@ def main():
 
                 asy_file = f"{lib_filepath}sym/{symbol}.asy"
 
+                # Further attributes may have to be added
+                value_x, value_y, value_align, value_size = 0, 0, "", 0
+                prefix_x, prefix_y, prefix_align, prefix_size = 0, 0, "", 0
+                symbol_x, symbol_y = 0, 0
+
+                affine = lambda p: add_vec(mirror_vec(mirror, rot_vec(phi, p)), [x_offset, y_offset])
+
                 # Every type of primitive handled with dense but obvious code.
                 # WINDOW/SYMATTR are dealt with over several cycles, which is
                 # confusing and not obvious :D
                 with open(asy_file, "r", encoding='ISO-8859-1') as f2stream:
                     for sline in f2stream:
+                        if "WINDOW " == sline[:7]:
+                            _, index, x, y, align, size = sline.split()
+                            x, y = map(float, [x, y])
+                            x, y = affine([x, y])
+
+                            if mirror ^ (rot[1:] == "180"):
+                                align = {"Left":"Right", "Right":"Left"}[align]
+                            if (rot[1:] == "90"):
+                                align = "VRight"
+                            if (rot[1:] == "270"):
+                                align = "VLeft"
+
+                            if index == "0":
+                                value_x = x
+                                value_y = y
+                                value_align = align
+                                value_size = size
+                            if index == "3":
+                                prefix_x = x
+                                prefix_y = y
+                                prefix_align = align
+                                prefix_size = size
+
                         if "LINE " == sline[:5]:
                             _, linetype, x0, y0, x1, y1 = sline.split()
                             x0, y0, x1, y1 = map(float, [x0, y0, x1, y1])
-                            x0, y0 = add_vec(rot_vec(phi, mirror_vec(mirror, [x0, y0])), [x_offset, y_offset])
-                            x1, y1 = add_vec(rot_vec(phi, mirror_vec(mirror, [x1, y1])), [x_offset, y_offset])
+                            x0, y0 = affine([x0, y0])
+                            x1, y1 = affine([x1, y1])
                             update_bounds(x0, y0)
                             update_bounds(x1, y1)
                             fprint(f"line {x0} {y0} {x1} {y1}")
@@ -316,8 +327,8 @@ def main():
                         if "RECT " == sline[:5]:
                             _, linetype, x0, y0, x1, y1 = sline.split()
                             x0, y0, x1, y1 = map(float, [x0, y0, x1, y1])
-                            x0, y0 = add_vec(rot_vec(phi, mirror_vec(mirror, [x0, y0])), [x_offset, y_offset])
-                            x1, y1 = add_vec(rot_vec(phi, mirror_vec(mirror, [x1, y1])), [x_offset, y_offset])
+                            x0, y0 = affine([x0, y0])
+                            x1, y1 = affine([x1, y1])
                             update_bounds(x0, y0)
                             update_bounds(x1, y1)
                             fprint(f"rect {x0} {y0} {x1} {y1}")
@@ -325,8 +336,8 @@ def main():
                         if "CIRCLE " == sline[:7]:
                             _, linetype, x0, y0, x1, y1 = sline.split()
                             x0, y0, x1, y1 = map(float, [x0, y0, x1, y1])
-                            x0, y0 = add_vec(rot_vec(phi, mirror_vec(mirror, [x0, y0])), [x_offset, y_offset])
-                            x1, y1 = add_vec(rot_vec(phi, mirror_vec(mirror, [x1, y1])), [x_offset, y_offset])
+                            x0, y0 = affine([x0, y0])
+                            x1, y1 = affine([x1, y1])
                             px = 0.5*(x0+x1)
                             py = 0.5*(y0+y1)
                             rx = abs(0.5*(x0-x1))
@@ -339,10 +350,10 @@ def main():
                         if "ARC " == sline[:4]:
                             _, linetype, x0, y0, x1, y1, x2, y2, x3, y3 = sline.split()
                             x0, y0, x1, y1, x2, y2, x3, y3 = map(float, [x0, y0, x1, y1, x2, y2, x3, y3])
-                            x0, y0 = add_vec(rot_vec(phi, mirror_vec(mirror, [x0, y0])), [x_offset, y_offset])
-                            x1, y1 = add_vec(rot_vec(phi, mirror_vec(mirror, [x1, y1])), [x_offset, y_offset])
-                            x2, y2 = add_vec(rot_vec(phi, mirror_vec(mirror, [x2, y2])), [x_offset, y_offset])
-                            x3, y3 = add_vec(rot_vec(phi, mirror_vec(mirror, [x3, y3])), [x_offset, y_offset])
+                            x0, y0 = affine([x0, y0])
+                            x1, y1 = affine([x1, y1])
+                            x2, y2 = affine([x2, y2])
+                            x3, y3 = affine([x3, y3])
                             px = 0.5*(x0+x1)
                             py = 0.5*(y0+y1)
                             rx = abs(0.5*(x0-x1))
@@ -357,7 +368,7 @@ def main():
 
                             angle = 180/pi*(a2 - a1)
 
-                            angle_dir = '-'
+                            angle_dir = '+' if mirror else '-'
                             large_arc = True
 
                             update_bounds(x0, y0)
