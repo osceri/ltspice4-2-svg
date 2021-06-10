@@ -20,14 +20,6 @@ My code doesn't try to resolve system paths, compatibility or anything. If it wo
 
 Github doesn't seem to be able to display the SVG. Perhaps the format is incorrect (something that the writesvg module might have function calls to remedy), but firefox is able to display this SVG. 
 
-<<<<<<< HEAD
-TODO:
-fix symbol values, symbol rotation (sometimes messes up)
-
-=======
->>>>>>> 627af03589f680941943900244150b4b2e936310
-Before:
-
 ![alt text](/first.PNG)
 
 After (pardon the hideous font):
